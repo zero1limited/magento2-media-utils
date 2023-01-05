@@ -80,12 +80,13 @@ class ImageClean extends Command
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
-    {        
+    {     
         $isDryrun = $input->getOption('dry-run');
         $this->appState->setAreaCode(Area::AREA_GLOBAL);
 
         /** @var \Magento\Framework\Filesystem\Directory\Write $mediaDirectory */
-        $mediaDirectory = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
+        // writer can't read .htaccess files, just throws an error
+        $mediaDirectory = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
         /** @var \Magento\Catalog\Model\View\Asset\Image $imageAsset  */
         $imageAsset = $this->imageFactory->create(['filePath' => '', 'miscParams' => []]);
         $cacheDirectory = $imageAsset->getModule();
@@ -175,23 +176,36 @@ class ImageClean extends Command
         $progress->setFormat('debug');
         $progress->start();
 
+        $errors = [];
+        $mediaDirectoryWriter = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
+
         foreach($fullPathedEntries as $filepath => $size){
-            if($mediaDirectory->isFile($filepath)){
-                $mediaDirectory->delete($filepath);
-            }else{
-                // remove empty directories
-                $files = $mediaDirectory->read($filepath);
-                if(count($files) == 0){
-                    $mediaDirectory->delete($filepath);
+            try{
+                if($mediaDirectory->isFile($filepath)){
+                    $mediaDirectoryWriter->delete($filepath);
+                }else{
+                    // remove empty directories
+                    $files = $mediaDirectory->read($filepath);
+                    if(count($files) == 0){
+                        $mediaDirectoryWriter->delete($filepath);
+                    }
                 }
+            }catch(\Exception $e){
+                $errors[$filepath] = $e;
             }
             $progress->advance();
         }
         $progress->finish();
         $output->writeln('');
-
-
         $output->writeln('<info>Complete</info>');
+
+        if(count($errors) > 0){
+            $output->writeln('Unable to delete the following files (you may want to manually remove them)');
+            foreach($errors as $filepath => $error){
+                $output->writeln('  '.$filepath.', error was: '.$error->getMessage());
+            }
+            return Cli::RETURN_FAILURE;
+        }
         return Cli::RETURN_SUCCESS;
     }
 
