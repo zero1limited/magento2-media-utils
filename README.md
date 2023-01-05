@@ -1,4 +1,4 @@
-# Media Util
+# Media Utils
 This module serves to add a few utility functions to the Magento CLI for working with your media assets.
 
 - [Product Image Variation Report](#product-image-variation-report)
