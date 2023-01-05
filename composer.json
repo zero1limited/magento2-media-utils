@@ -1,0 +1,22 @@
+{
+    "name": "zero1/media-utils",
+    "description": "Magento 2 module",
+    "type": "magento2-module",
+    "license": "OSL-3.0",
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Zero1\\MediaUtils\\": ""
+        }
+    },
+    "authors": [
+        {
+            "name": "zero1-machine",
+            "email": "mdoq-machine@mdoq.io"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
